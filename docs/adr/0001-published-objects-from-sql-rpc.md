@@ -1,0 +1,3 @@
+# Published objects come from SQL over RPC; Edge Functions only for outside calls
+
+Clients read each published object from a Postgres function called over RPC (through PostgREST), which returns the full JSON envelope. Zod checks the shape in clients and in CI contract tests. Edge Functions are used only for work that calls outside services (Claude, Garmin) or needs secrets. Anything Claude writes, such as the briefing, is checked against the contract before it's saved. We chose this over one Edge Function per object (which would check output on every read) to avoid cold starts and duplicated code, because the only shapes likely to go wrong come from Claude. GraphQL (`pg_graphql`) is deliberately left off, so there's one API to secure and one set of generated types.

@@ -1,0 +1,3 @@
+# Only a hand-tagged shortlist of the exercise library is usable by the coach
+
+We import all of free-exercise-db (800+ exercises), but it has no movement pattern or body region, and both are needed: movement pattern for the balance check, body region for the progression load jump. Rather than guessing the tags from `force` and muscles, we hand-tag a shortlist of about 60 exercises in a seed file. The coach may only choose exercises that are tagged and available at your gym. Guessed tags would cover more exercises but would put wrong data, unnoticed, into the balance check and progression. If an exercise is missing, you tag it.

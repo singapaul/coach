@@ -1,0 +1,3 @@
+# The contract package lives in `supabase/functions/_shared/contract`
+
+The Zod contract is shared by the Expo app and the Edge Functions. It lives in `supabase/functions/_shared/contract/` and is registered as a pnpm workspace package that the app imports, rather than living in `packages/contract`. Supabase only documents `_shared` for sharing code with Edge Functions, and importing from a package outside `supabase/` relied on a deploy flag (`--use-api`) that was experimental in 2025, with a reported failure. The contract stays plain TypeScript with no dependency except Zod, which each function's `deno.json` maps to a pinned `npm:zod`.
