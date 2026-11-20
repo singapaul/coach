@@ -32,6 +32,10 @@ _Avoid_: Planned set, target set
 A set you actually did, with the reps and load you performed, usually ticked off against a prescribed set.
 _Avoid_: Completed set, performed set
 
+**Extra set**:
+A logged set that fulfils no prescribed set: one more than prescribed, or an exercise the coach didn't prescribe that day.
+_Avoid_: Bonus set, unplanned set
+
 **Calibration week**:
 The first week an exercise is prescribed, with no target load. What you lift sets the starting load for the following week.
 _Avoid_: Test week, baseline week

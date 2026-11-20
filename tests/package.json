@@ -1,0 +1,20 @@
+{
+  "name": "@coach/api-tests",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@coach/contract": "workspace:*",
+    "@coach/db-types": "workspace:*",
+    "@supabase/supabase-js": "2.119.2",
+    "@types/node": "^22.0.0",
+    "typescript": "~6.0.3",
+    "vitest": "4.1.12",
+    "zod": "4.6.7"
+  }
+}

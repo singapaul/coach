@@ -1,0 +1,5 @@
+packages:
+  - apps/*
+  - supabase/functions/_shared/contract
+  - supabase/types
+  - tests
