@@ -2,11 +2,31 @@
 -- Source: free-exercise-db f00c92c7dcf1216a928a52c3706c7ce8e2f71ed5 (dist/exercises.json, sha256 5bb747e3fc658f095a60dcbf6d53c96627acdcc6ffb6fffde86f7e26995d40bf), Unlicense.
 -- 876 exercises. Safe to run again: unchanged rows are left alone,
 -- and movement_pattern / body_region are owned by 02_coach_shortlist.sql.
+-- A seeded exercise that is no longer in free-exercise-db is deleted, unless
+-- something references it (then it stays, and the next run tries again).
+--
+-- One DO block, because the CLI sends seed files as a pipelined batch.
 
-insert into public.exercises
-  (id, name, primary_muscles, secondary_muscles, equipment, force, mechanic, category, level, instructions, source)
-select v.*, 'seed'
-from (values
+do $seed$
+declare
+  v_unreferenced text;
+begin
+  create temporary table free_exercise_db (
+    id text primary key,
+    name text not null,
+    primary_muscles text[] not null,
+    secondary_muscles text[] not null,
+    equipment text,
+    force text,
+    mechanic text,
+    category text,
+    level text,
+    instructions text[] not null
+  );
+
+  insert into free_exercise_db
+    (id, name, primary_muscles, secondary_muscles, equipment, force, mechanic, category, level, instructions)
+  values
   ('3_4_Sit-Up', '3/4 Sit-Up', array['abdominals'], '{}'::text[], 'body only', 'pull', 'compound', 'strength', 'beginner', array['Lie down on the floor and secure your feet. Your legs should be bent at the knees.', 'Place your hands behind or to the side of your head. You will begin with your back on the ground. This will be your starting position.', 'Flex your hips and spine to raise your torso toward your knees.', 'At the top of the contraction your torso should be perpendicular to the ground. Reverse the motion, going only ¾ of the way down.', 'Repeat for the recommended amount of repetitions.']),
   ('90_90_Hamstring', '90/90 Hamstring', array['hamstrings'], array['calves'], 'body only', 'push', null, 'stretching', 'beginner', array['Lie on your back, with one leg extended straight out.', 'With the other leg, bend the hip and knee to 90 degrees. You may brace your leg with your hands if necessary. This will be your starting position.', 'Extend your leg straight into the air, pausing briefly at the top. Return the leg to the starting position.', 'Repeat for 10-20 repetitions, and then switch to the other leg.']),
   ('Ab_Crunch_Machine', 'Ab Crunch Machine', array['abdominals'], '{}'::text[], 'machine', 'pull', 'isolation', 'strength', 'intermediate', array['Select a light resistance and sit down on the ab machine placing your feet under the pads provided and grabbing the top handles. Your arms should be bent at a 90 degree angle as you rest the triceps on the pads provided. This will be your starting position.', 'At the same time, begin to lift the legs up as you crunch your upper torso. Breathe out as you perform this movement. Tip: Be sure to use a slow and controlled motion. Concentrate on using your abs to move the weight while relaxing your legs and feet.', 'After a second pause, slowly return to the starting position as you breathe in.', 'Repeat the movement for the prescribed amount of repetitions.']),
@@ -883,20 +903,48 @@ Caution: Always ensure that the dumbbell used for this exercise is secure. Using
   ('Yoke_Walk', 'Yoke Walk', array['quadriceps'], array['abdominals', 'abductors', 'adductors', 'calves', 'glutes', 'hamstrings', 'lower back'], 'other', null, 'compound', 'strongman', 'intermediate', array['The yoke is usually done with a yoke apparatus, but is sometimes seen with refrigerators or other heavy objects.', 'Begin by racking the apparatus across the back of the shoulders. With your head looking forward and back arched, lift the yoke by driving through the heels.', 'Begin walking as quickly as possible using short, quick steps. You may hold the side posts of the yoke to help steady it and hold it in position. Continue for the given distance as fast as possible, usually 75-100 feet.']),
   ('Zercher_Squats', 'Zercher Squats', array['quadriceps'], array['calves', 'glutes', 'hamstrings'], 'barbell', 'push', 'compound', 'strength', 'expert', array['This exercise is best performed inside a squat rack for safety purposes. To begin, first set the bar on a rack that best matches your height. The correct height should be anywhere above the waist but below the chest. Once the correct height is chosen and the bar is loaded, lock your hands together and place the bar on top of your arms in between the forearm and upper arm.', 'Lift the bar up so that it is resting on top of your forearms. If you are holding the bar properly, it should look as if you have your arms crossed but with a bar running across them.', 'Step away from the rack and position your legs using a shoulder width medium stance with the toes slightly pointed out. Keep your head up at all times as looking down will get you off balance and also maintain a straight back. This will be your starting position. (Note: For the purposes of this discussion we will use the medium stance described above which targets overall development; however you can choose any of the three stances discussed in the foot stances section).', 'Begin to lower the bar by bending the knees as you maintain a straight posture with the head up. Continue down until the angle between the upper leg and the calves becomes slightly less than 90-degrees (which is the point in which the upper legs are below parallel to the floor). Inhale as you perform this portion of the movement. Tip: If you performed the exercise correctly, the front of the knees should make an imaginary straight line with the toes that is perpendicular to the front. If your knees are past that imaginary line (if they are past your toes) then you are placing undue stress on the knee and the exercise has been performed incorrectly.', 'Begin to raise the bar as you exhale by pushing the floor with the ball of your foot mainly as you straighten the legs again and go back to the starting position.', 'Repeat for the recommended amount of repetitions.']),
   ('Zottman_Curl', 'Zottman Curl', array['biceps'], array['forearms'], 'dumbbell', 'pull', 'isolation', 'strength', 'intermediate', array['Stand up with your torso upright and a dumbbell in each hand being held at arms length. The elbows should be close to the torso.', 'Make sure the palms of the hands are facing each other. This will be your starting position.', 'While holding the upper arm stationary, curl the weights while contracting the biceps as you breathe out. Only the forearms should move. Your wrist should rotate so that you have a supinated (palms up) grip. Continue the movement until your biceps are fully contracted and the dumbbells are at shoulder level.', 'Hold the contracted position for a second as you squeeze the biceps.', 'Now during the contracted position, rotate your wrist until you now have a pronated (palms facing down) grip with the thumb at a higher position than the pinky.', 'Slowly begin to bring the dumbbells back down using the pronated grip.', 'As the dumbbells close your thighs, start rotating the wrist so that you go back to a neutral (palms facing your body) grip.', 'Repeat for the recommended amount of repetitions.']),
-  ('Zottman_Preacher_Curl', 'Zottman Preacher Curl', array['biceps'], array['forearms'], 'dumbbell', 'pull', 'isolation', 'strength', 'intermediate', array['Grab a dumbbell in each hand and place your upper arms on top of the preacher bench or the incline bench. The dumbbells should be held at shoulder height and the elbows should be flexed. Hold the dumbbells with the palms of your hands facing down. This will be your starting position.', 'As you breathe in, slowly lower the dumbbells keeping the palms down until your upper arm is extended and your biceps are fully stretched.', 'Now rotate your wrists once you are at the bottom of the movement so that the palms of the hands are facing up.', 'As you exhale, use your biceps to curl the weights up until they are fully contracted and the dumbbells are at shoulder height. Again, remember that to ensure full contraction you need to bring that small finger higher than the thumb.', 'Squeeze the biceps hard for a second at the contracted position and rotate your wrists so that the palms are facing down again.', 'Repeat for the recommended amount of repetitions.'])
-) as v (id, name, primary_muscles, secondary_muscles, equipment, force, mechanic, category, level, instructions)
-on conflict (id) do update set
-  name = excluded.name,
-  primary_muscles = excluded.primary_muscles,
-  secondary_muscles = excluded.secondary_muscles,
-  equipment = excluded.equipment,
-  force = excluded.force,
-  mechanic = excluded.mechanic,
-  category = excluded.category,
-  level = excluded.level,
-  instructions = excluded.instructions
-where (exercises.name, exercises.primary_muscles, exercises.secondary_muscles, exercises.equipment,
-       exercises.force, exercises.mechanic, exercises.category, exercises.level, exercises.instructions)
-  is distinct from
-      (excluded.name, excluded.primary_muscles, excluded.secondary_muscles, excluded.equipment,
-       excluded.force, excluded.mechanic, excluded.category, excluded.level, excluded.instructions);
+  ('Zottman_Preacher_Curl', 'Zottman Preacher Curl', array['biceps'], array['forearms'], 'dumbbell', 'pull', 'isolation', 'strength', 'intermediate', array['Grab a dumbbell in each hand and place your upper arms on top of the preacher bench or the incline bench. The dumbbells should be held at shoulder height and the elbows should be flexed. Hold the dumbbells with the palms of your hands facing down. This will be your starting position.', 'As you breathe in, slowly lower the dumbbells keeping the palms down until your upper arm is extended and your biceps are fully stretched.', 'Now rotate your wrists once you are at the bottom of the movement so that the palms of the hands are facing up.', 'As you exhale, use your biceps to curl the weights up until they are fully contracted and the dumbbells are at shoulder height. Again, remember that to ensure full contraction you need to bring that small finger higher than the thumb.', 'Squeeze the biceps hard for a second at the contracted position and rotate your wrists so that the palms are facing down again.', 'Repeat for the recommended amount of repetitions.']);
+
+  insert into public.exercises
+    (id, name, primary_muscles, secondary_muscles, equipment, force, mechanic, category, level, instructions, source)
+  select f.*, 'seed'
+  from free_exercise_db f
+  on conflict (id) do update set
+    name = excluded.name,
+    primary_muscles = excluded.primary_muscles,
+    secondary_muscles = excluded.secondary_muscles,
+    equipment = excluded.equipment,
+    force = excluded.force,
+    mechanic = excluded.mechanic,
+    category = excluded.category,
+    level = excluded.level,
+    instructions = excluded.instructions
+  where (exercises.name, exercises.primary_muscles, exercises.secondary_muscles, exercises.equipment,
+         exercises.force, exercises.mechanic, exercises.category, exercises.level, exercises.instructions)
+    is distinct from
+        (excluded.name, excluded.primary_muscles, excluded.secondary_muscles, excluded.equipment,
+         excluded.force, excluded.mechanic, excluded.category, excluded.level, excluded.instructions);
+
+  -- "Unreferenced" means no row in any table with a foreign key to exercises,
+  -- read from the catalog so a new referencing table is covered automatically.
+  if exists (
+    select 1 from pg_catalog.pg_constraint c
+    where c.contype = 'f' and c.confrelid = 'public.exercises'::regclass and cardinality(c.conkey) <> 1
+  ) then
+    raise exception 'free-exercise-db seed only understands single-column foreign keys to exercises';
+  end if;
+
+  select string_agg(format('not exists (select 1 from %s r where r.%I = e.id)', c.conrelid::regclass, a.attname), ' and ')
+  into v_unreferenced
+  from pg_catalog.pg_constraint c
+  join pg_catalog.pg_attribute a on a.attrelid = c.conrelid and a.attnum = c.conkey[1]
+  where c.contype = 'f' and c.confrelid = 'public.exercises'::regclass;
+
+  execute 'delete from public.exercises e '
+    'where e.source = ''seed'' '
+    'and not exists (select 1 from free_exercise_db f where f.id = e.id) '
+    'and ' || coalesce(v_unreferenced, 'true');
+
+  drop table free_exercise_db;
+end;
+$seed$;

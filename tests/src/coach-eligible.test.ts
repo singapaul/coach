@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { createTwoTestUsers, type TestUser } from './harness/users';
+import { adminClient, createTwoTestUsers, type TestUser } from './harness/users';
 
 // From the shortlist seed: tagged horizontal_push / upper.
 const TAGGED = 'Barbell_Bench_Press_-_Medium_Grip';
@@ -75,5 +75,30 @@ describe('exercises eligible for the coach', () => {
 
     expect(await eligibleIds(a, [id])).toEqual([id]);
     expect(await eligibleIds(b, [id])).toEqual([]);
+  });
+
+  it("refuses a signed-in lifter who asks for another lifter's eligible exercises", async () => {
+    const { data, error } = await b.client.rpc('coach_eligible_exercises', { p_user_id: a.id }).select('id').limit(1);
+
+    expect(data).toBeNull();
+    expect(error?.code).toBe('42501');
+  });
+
+  it('lets a signed-in lifter pass their own ID', async () => {
+    const { data, error } = await a.client.rpc('coach_eligible_exercises', { p_user_id: a.id }).select('id').eq('id', TAGGED);
+
+    expect(error).toBeNull();
+    expect(data).toEqual([{ id: TAGGED }]);
+  });
+
+  it("lets server code (service_role) ask for any lifter's eligible exercises", async () => {
+    await a.client.from('user_exercise_prefs').insert({ exercise_id: TAGGED, avoid: true });
+    const admin = adminClient();
+
+    const forA = await admin.rpc('coach_eligible_exercises', { p_user_id: a.id }).select('id').eq('id', TAGGED);
+    const forB = await admin.rpc('coach_eligible_exercises', { p_user_id: b.id }).select('id').eq('id', TAGGED);
+
+    expect(forA).toMatchObject({ error: null, data: [] });
+    expect(forB).toMatchObject({ error: null, data: [{ id: TAGGED }] });
   });
 });

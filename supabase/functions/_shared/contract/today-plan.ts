@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { definePublishedObject, isoDate, isoDateTimeUtc } from './envelope.ts';
 
-/** A set already logged against a prescribed set, oldest first. */
+/** A set the lifter logged in this session. */
 export const loggedSetV1 = z.object({
   /** Created by the app when the set was logged. */
   id: z.uuid(),
@@ -26,9 +26,15 @@ export const sessionExerciseV1 = z.object({
   position: z.number().int().positive(),
   exercise_id: z.string().min(1),
   name: z.string().min(1),
-  /** Rest between sets, from the day template; `null` if the template no longer lists it. */
+  /** Rest between sets, from the day template; `null` if the template doesn't list this exercise. */
   rest_s: z.number().int().nonnegative().nullable(),
   prescribed_sets: z.array(prescribedSetV1),
+  /**
+   * Sets of this exercise logged in this session that fulfil no prescribed set,
+   * oldest first. An exercise that was only logged this way comes after the
+   * prescribed exercises, with no prescribed sets.
+   */
+  extra_logged_sets: z.array(loggedSetV1),
 });
 
 export const sessionStatus = z.enum(['planned', 'done', 'skipped']);
@@ -54,17 +60,19 @@ export const noSessionReason = z.enum(['no_active_block', 'no_session_today']);
 export const todayPlanV1 = z.union([
   definePublishedObject({
     version: 1,
-    period: { date: isoDate },
+    period: 'date',
     data: { session: todayPlanSessionV1, reason: z.null() },
   }),
   definePublishedObject({
     version: 1,
-    period: { date: isoDate },
+    period: 'date',
     data: { session: z.null(), reason: noSessionReason },
   }),
 ]);
 
 export type TodayPlanV1 = z.infer<typeof todayPlanV1>;
 export type TodayPlanSessionV1 = z.infer<typeof todayPlanSessionV1>;
+export type SessionExerciseV1 = z.infer<typeof sessionExerciseV1>;
+export type PrescribedSetV1 = z.infer<typeof prescribedSetV1>;
 export type LoggedSetV1 = z.infer<typeof loggedSetV1>;
 export type NoSessionReason = z.infer<typeof noSessionReason>;

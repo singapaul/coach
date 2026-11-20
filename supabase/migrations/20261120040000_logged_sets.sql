@@ -47,28 +47,6 @@ create policy "owner" on public.logged_sets for all to authenticated
 create trigger logged_sets_touch_updated_at before update on public.logged_sets
   for each row execute function public.touch_updated_at();
 
--- today_plan v1: the sets logged against one prescribed set, oldest first.
--- Replaces the empty placeholder from the programming migration.
-create or replace function public.today_plan_logged_sets(p_prescribed_set_id uuid)
-returns jsonb
-language sql
-stable
-security invoker
-set search_path = ''
-as $$
-  select coalesce(
-    jsonb_agg(
-      jsonb_build_object(
-        'id', ls.id,
-        'performed_at', to_char(ls.performed_at at time zone 'utc', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'),
-        'reps', ls.reps,
-        'kg', ls.kg,
-        'rpe', ls.rpe
-      )
-      order by ls.performed_at, ls.created_at, ls.id
-    ),
-    '[]'::jsonb
-  )
-  from public.logged_sets ls
-  where ls.prescribed_set_id = p_prescribed_set_id;
-$$;
+create trigger logged_sets_check_exercise
+  before insert or update of exercise_id, user_id on public.logged_sets
+  for each row execute function public.check_exercise_usable('exercise_id');

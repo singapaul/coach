@@ -81,6 +81,72 @@ describe('logging a set', () => {
     expect(data).toEqual([{ id, prescribed_set_id: null, exercise_id: 'Cable_Crossover', rpe: null }]);
   });
 
+  it("shows extra sets in today's plan under their exercise, apart from the prescribed sets", async () => {
+    const lifter = await createLifterWithBlock({ startDate: BLOCK_START });
+    const before = await todayPlanAt(lifter.user.client, '2026-06-01T17:00:00+01:00');
+    const sessionId = before.session!.id;
+    const bench = before.session!.exercises[0]!;
+    const [first, second] = [randomUUID(), randomUUID()];
+
+    // A fourth bench set beyond the three prescribed, sent out of order.
+    for (const [id, performedAt, reps] of [
+      [second, '2026-06-01T18:20:00+01:00', 5],
+      [first, '2026-06-01T18:15:00+01:00', 6],
+    ] as const) {
+      const { error } = await logSet(lifter.user.client, {
+        id,
+        session_id: sessionId,
+        prescribed_set_id: null,
+        exercise_id: bench.exercise_id,
+        performed_at: performedAt,
+        reps,
+        kg: 60,
+      });
+      expect(error).toBeNull();
+    }
+
+    const after = await todayPlanAt(lifter.user.client, '2026-06-01T18:30:00+01:00');
+    const exercises = after.session!.exercises;
+    expect(exercises[0]!.extra_logged_sets).toEqual([
+      { id: first, performed_at: '2026-06-01T17:15:00.000000Z', reps: 6, kg: 60, rpe: null },
+      { id: second, performed_at: '2026-06-01T17:20:00.000000Z', reps: 5, kg: 60, rpe: null },
+    ]);
+    expect(exercises[0]!.prescribed_sets.every((s) => s.logged_sets.length === 0)).toBe(true);
+    expect(exercises[1]!.extra_logged_sets).toEqual([]);
+  });
+
+  it("lists an exercise that was only logged as extra sets after the prescribed exercises, with no prescribed sets", async () => {
+    const lifter = await createLifterWithBlock({ startDate: BLOCK_START });
+    const push = lifter.sessions.find((s) => s.dayTemplateName === 'Push')!;
+    const id = randomUUID();
+
+    const { error } = await logSet(lifter.user.client, {
+      id,
+      session_id: push.id,
+      prescribed_set_id: null,
+      exercise_id: 'Cable_Crossover',
+      performed_at: '2026-06-01T18:40:00+01:00',
+      reps: 12,
+      kg: 15,
+      rpe: 9,
+    });
+    expect(error).toBeNull();
+
+    const plan = await todayPlanAt(lifter.user.client, '2026-06-01T19:00:00+01:00');
+    const exercises = plan.session!.exercises;
+    expect(exercises.map((e) => [e.position, e.exercise_id, e.prescribed_sets.length])).toEqual([
+      [1, 'Barbell_Bench_Press_-_Medium_Grip', 3],
+      [2, 'Seated_Dumbbell_Press', 3],
+      [3, 'Side_Lateral_Raise', 3],
+      [4, 'Cable_Crossover', 0],
+    ]);
+    expect(exercises[3]).toMatchObject({
+      name: 'Cable Crossover',
+      rest_s: null,
+      extra_logged_sets: [{ id, performed_at: '2026-06-01T17:40:00.000000Z', reps: 12, kg: 15, rpe: 9 }],
+    });
+  });
+
   it("refuses a set that claims to fulfil another session's prescribed set, or another exercise's", async () => {
     const lifter = await createLifterWithBlock({ startDate: BLOCK_START });
     const [push, pull] = [lifter.sessions[0]!, lifter.sessions[1]!];

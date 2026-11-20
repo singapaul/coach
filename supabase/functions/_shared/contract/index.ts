@@ -19,6 +19,8 @@ export {
   todayPlanV1,
   type LoggedSetV1,
   type NoSessionReason,
+  type PrescribedSetV1,
+  type SessionExerciseV1,
   type TodayPlanSessionV1,
   type TodayPlanV1,
 } from './today-plan.ts';

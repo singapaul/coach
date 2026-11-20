@@ -68,6 +68,29 @@ describe('the seeded starting block', () => {
     }
   });
 
+  it('has a favourite from the block, and an avoided and an unavailable exercise outside it, which the coach may not use', async () => {
+    const { data: prefs } = await client
+      .from('user_exercise_prefs')
+      .select('exercise_id, available, favourite, avoid')
+      .order('exercise_id');
+    const { data: inTemplates } = await client.from('day_template_exercises').select('exercise_id');
+    const templateIds = new Set(inTemplates!.map((e) => e.exercise_id));
+    const { data: eligible } = await client
+      .rpc('coach_eligible_exercises')
+      .select('id')
+      .in('id', ['Barbell_Deadlift', 'Hack_Squat', 'Barbell_Bench_Press_-_Medium_Grip']);
+
+    expect(prefs).toEqual([
+      { exercise_id: 'Barbell_Bench_Press_-_Medium_Grip', available: true, favourite: true, avoid: false },
+      { exercise_id: 'Barbell_Deadlift', available: true, favourite: false, avoid: true },
+      { exercise_id: 'Hack_Squat', available: false, favourite: false, avoid: false },
+    ]);
+    expect(templateIds.has('Barbell_Bench_Press_-_Medium_Grip')).toBe(true);
+    expect(templateIds.has('Barbell_Deadlift')).toBe(false);
+    expect(templateIds.has('Hack_Squat')).toBe(false);
+    expect(eligible).toEqual([{ id: 'Barbell_Bench_Press_-_Medium_Grip' }]);
+  });
+
   it("today_plan answers for the seeded user in the v1 shape", async () => {
     const { data, error } = await client.rpc('today_plan');
 

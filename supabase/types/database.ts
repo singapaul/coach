@@ -569,16 +569,13 @@ export type Database = {
         }
       }
       is_iana_timezone: { Args: { tz: string }; Returns: boolean }
+      iso_utc: { Args: { t: string }; Returns: string }
       lifter_local_date: {
         Args: { p_at: string; p_user_id?: string }
         Returns: string
       }
       today_plan: { Args: never; Returns: Json }
       today_plan_at: { Args: { p_at: string }; Returns: Json }
-      today_plan_logged_sets: {
-        Args: { p_prescribed_set_id: string }
-        Returns: Json
-      }
       training_week_start: { Args: { d: string }; Returns: string }
     }
     Enums: {

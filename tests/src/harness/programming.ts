@@ -223,22 +223,7 @@ export async function todayPlanAt(client: Client, at: string): Promise<TodayPlan
   return todayPlanV1.parse(data);
 }
 
-export type LoggedSetInsert = {
-  id: string;
-  session_id: string;
-  prescribed_set_id: string | null;
-  exercise_id: string;
-  performed_at?: string;
-  reps: number;
-  kg: number;
-  rpe?: number | null;
-};
-
 /**
- * Logs a set exactly as the app does: a direct PostgREST insert of a row whose
- * UUID the app created, sent with `ON CONFLICT (id) DO NOTHING` so a retry of
- * the same row changes nothing and doesn't fail.
+ * Logs a set exactly as the app does: the same helper, with this test's client.
  */
-export async function logSet(client: Client, set: LoggedSetInsert) {
-  return client.from('logged_sets').upsert(set, { onConflict: 'id', ignoreDuplicates: true });
-}
+export { logSet, type LoggedSetInsert } from '@coach/db-types/logged-sets';

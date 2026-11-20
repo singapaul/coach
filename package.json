@@ -9,8 +9,10 @@
     "db:start": "supabase start",
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
+    "db:seed:check": "node scripts/check-seeds.mjs",
     "db:types": "supabase gen types typescript --local --schema public > supabase/types/database.ts",
     "test": "pnpm --filter @coach/api-tests test",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint"
   }
 }

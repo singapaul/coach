@@ -31,6 +31,10 @@ create trigger user_exercise_prefs_touch_updated_at
   before update on public.user_exercise_prefs
   for each row execute function public.touch_updated_at();
 
+create trigger user_exercise_prefs_check_exercise
+  before insert or update of exercise_id, user_id on public.user_exercise_prefs
+  for each row execute function public.check_exercise_usable('exercise_id');
+
 -- How much progress on one exercise carries over to another. Empty until Step 7.
 create table public.exercise_similar (
   user_id uuid not null default auth.uid() references auth.users (id) on delete cascade,
@@ -47,6 +51,10 @@ comment on table public.exercise_similar is
 
 create index exercise_similar_similar_exercise_id_idx on public.exercise_similar (similar_exercise_id);
 
+create trigger exercise_similar_check_exercise
+  before insert or update of exercise_id, similar_exercise_id, user_id on public.exercise_similar
+  for each row execute function public.check_exercise_usable('exercise_id', 'similar_exercise_id');
+
 alter table public.exercise_similar enable row level security;
 
 create policy "owner" on public.exercise_similar
@@ -62,14 +70,22 @@ create policy "owner" on public.exercise_similar
 -- security invoker: RLS still applies, so a caller only ever sees seeded
 -- exercises and their own custom ones, and only their own preferences.
 -- Called over RPC as the signed-in lifter it uses auth.uid(); server code running
--- as service_role passes the lifter's ID explicitly.
+-- as service_role passes the lifter's ID explicitly. A signed-in lifter passing
+-- someone else's ID is refused (42501) rather than given a half-filtered list.
 create function public.coach_eligible_exercises(p_user_id uuid default auth.uid())
 returns setof public.exercises
-language sql
+language plpgsql
 stable
 security invoker
 set search_path = ''
 as $$
+begin
+  if current_user in ('authenticated', 'anon') and p_user_id is distinct from auth.uid() then
+    raise exception 'coach_eligible_exercises: you can only ask about yourself'
+      using errcode = 'insufficient_privilege';
+  end if;
+
+  return query
   select e.*
   from public.exercises e
   left join public.user_exercise_prefs p
@@ -80,6 +96,7 @@ as $$
     and (e.user_id is null or e.user_id = p_user_id)
     and coalesce(p.available, true)
     and not coalesce(p.avoid, false);
+end;
 $$;
 
 comment on function public.coach_eligible_exercises(uuid) is

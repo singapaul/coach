@@ -6,10 +6,10 @@ AI Strength Coach. The architecture and build plan is in `docs/AI Strength Coach
 
 | Path | Package | What it is |
 | --- | --- | --- |
-| `apps/mobile` | `@coach/mobile` | Expo app (TypeScript), built with EAS as an Android development build |
+| `apps/mobile` | `@coach/mobile` | Expo app (TypeScript, Expo Router: routes in `src/app/`), built with EAS as an Android development build |
 | `supabase/` | | Supabase project: `config.toml`, `migrations/`, `functions/` |
-| `supabase/functions/_shared/contract` | `@coach/contract` | Published-object contract: Zod schemas and types (ADR 0003) |
-| `supabase/types` | `@coach/db-types` | Database types generated from the local schema |
+| `supabase/functions/_shared/contract` | `@coach/contract` | Published-object contract: Zod schemas and types (ADR 0003). Edge Functions import it by relative path; `supabase/functions/deno.json` maps `zod` to the same pinned version |
+| `supabase/types` | `@coach/db-types` | Database types generated from the local schema (`database.ts`), plus typed write helpers the app and the tests share (`@coach/db-types/logged-sets`) |
 | `tests` | `@coach/api-tests` | Vitest + supabase-js tests against the local stack |
 
 ## Prerequisites
@@ -23,12 +23,14 @@ pnpm install
 pnpm db:start      # supabase start: pulls images, starts the stack, applies migrations
 pnpm test          # API tests against the local stack
 pnpm typecheck     # every workspace package
+pnpm lint          # expo lint in the app
 ```
 
 Other commands:
 
 ```sh
 pnpm db:reset      # drop the local database, re-apply every migration, then run supabase/seeds/*.sql
+pnpm db:seed:check # run the seeds twice against the local stack and check the second run changes nothing (needs psql)
 pnpm db:types      # regenerate supabase/types/database.ts from the local schema
 pnpm db:stop       # stop the stack
 supabase migration new <name>   # new file in supabase/migrations/
@@ -45,13 +47,17 @@ After changing the schema, run `pnpm db:reset && pnpm db:types` and commit the r
 
 - `03_starting_block.sql`: the local test user, **`lifter@coach.local` / `coach-local-lifter`** (Europe/London), and their starting Push/Pull/Legs block. The block starts on the Monday of the current training week at seed time, and only week 1 exists: its sessions and calibration prescribed sets with no target loads (ADR 0002). On the hosted project the block is created for the real account by a one-off script instead.
 
-Which exercises the coach may use is defined once, by the `coach_eligible_exercises()` database function.
+- `04_exercise_prefs.sql`: a few exercise preferences for the local test user: a favourite from the starting block, and an avoided and an unavailable exercise that aren't in it, so today's plan is unaffected.
+
+`pnpm db:seed:check` reruns every seed file against the local stack and fails if the second run changes any row (it also checks that a seeded exercise free-exercise-db dropped is deleted when nothing references it, and kept when something does). Run it after changing a seed file.
+
+Which exercises the coach may use is defined once, by the `coach_eligible_exercises()` database function. A signed-in lifter can only ask about themselves; server code running as `service_role` passes the lifter's ID. Every table with an exercise column only accepts seeded exercises or the row owner's own custom ones, and another lifter's custom exercise gets the same error as one that doesn't exist.
 
 ### Published objects
 
 Clients read published objects over RPC (ADR 0001); their Zod schemas are in the contract package.
 
-- `today_plan()`: today's session in the lifter's time zone, with its exercises, prescribed sets and logged sets, or `session: null` with `reason` `no_active_block` or `no_session_today`. `today_plan_at(p_at)` returns the same object as if "now" were `p_at`; the tests use it to pin the clock, and clients call `today_plan()`.
+- `today_plan()`: today's session in the lifter's time zone, with its exercises, prescribed sets and logged sets (extra sets, which fulfil no prescribed set, are under their exercise's `extra_logged_sets`; an exercise only logged that way comes after the prescribed ones), or `session: null` with `reason` `no_active_block` or `no_session_today`. `today_plan_at(p_at)` returns the same object as if "now" were `p_at`; the tests use it to pin the clock, and clients call `today_plan()`.
 
 Training weeks run Monday to Sunday in the profile's time zone: `training_week_start(date)` and `lifter_local_date(timestamptz)` are the database helpers for that.
 

@@ -49,7 +49,9 @@ begin
   update public.profiles
   set height_cm = coalesce(height_cm, 180), birth_year = coalesce(birth_year, 1990),
       sex = coalesce(sex, 'male'), training_days_per_week = coalesce(training_days_per_week, 3)
-  where user_id = v_user_id;
+  where user_id = v_user_id
+    -- Only when something is missing, so a rerun doesn't touch updated_at.
+    and (height_cm is null or birth_year is null or sex is null or training_days_per_week is null);
 
   if exists (select 1 from public.blocks where user_id = v_user_id and status = 'active') then
     raise notice 'lifter@coach.local already has an active block; leaving it alone';

@@ -12,6 +12,23 @@ as $$
   select exists (select 1 from pg_catalog.pg_timezone_names where name = tz);
 $$;
 
+-- An instant as ISO 8601 UTC with a trailing Z and microseconds, e.g.
+-- 2026-11-20T07:30:00.123456Z: the timestamp format of every published object.
+-- to_json(timestamptz) gives a +00:00 offset, which the contract rejects, so
+-- RPCs format timestamps with this instead.
+create function public.iso_utc(t timestamptz)
+returns text
+language sql
+immutable
+parallel safe
+set search_path = ''
+as $$
+  select to_char(t at time zone 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"');
+$$;
+
+comment on function public.iso_utc(timestamptz) is
+  'ISO 8601 UTC with a trailing Z, e.g. 2026-11-20T07:30:00.123456Z: how published objects write timestamps.';
+
 create table public.profiles (
   user_id uuid primary key default auth.uid() references auth.users (id) on delete cascade,
   height_cm numeric(4, 1) check (height_cm > 0 and height_cm < 300),

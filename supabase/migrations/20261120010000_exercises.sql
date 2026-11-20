@@ -66,3 +66,44 @@ create policy "owner deletes custom" on public.exercises
 create trigger exercises_touch_updated_at
   before update on public.exercises
   for each row execute function public.touch_updated_at();
+
+-- Foreign keys ignore RLS, so on their own they'd let a lifter reference another
+-- lifter's custom exercise, and their error would confirm that the ID exists.
+-- Every table with an exercise column also gets this before-insert/update
+-- trigger: the exercise must be seeded or owned by the row's user_id, and an
+-- exercise you can't use gives the same error as one that doesn't exist.
+-- Trigger arguments name the exercise columns to check.
+--
+-- security definer, so it sees every exercise and decides by the row's owner
+-- alone, the same for every role (service_role included).
+create function public.check_exercise_usable()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  v_row jsonb := to_jsonb(new);
+  v_column text;
+  v_exercise_id text;
+begin
+  foreach v_column in array tg_argv loop
+    v_exercise_id := v_row ->> v_column;
+    if v_exercise_id is not null and not exists (
+      select 1 from public.exercises e
+      where e.id = v_exercise_id
+        and (e.user_id is null or e.user_id = new.user_id)
+    ) then
+      raise exception 'exercise % not found', v_exercise_id
+        using errcode = 'foreign_key_violation',
+              hint = 'Use a seeded exercise or one of your own custom exercises.';
+    end if;
+  end loop;
+  return new;
+end;
+$$;
+
+comment on function public.check_exercise_usable() is
+  'Trigger: the exercise columns named in the arguments must be seeded exercises or the row owner''s custom ones.';
+
+revoke execute on function public.check_exercise_usable() from public, anon, authenticated;
