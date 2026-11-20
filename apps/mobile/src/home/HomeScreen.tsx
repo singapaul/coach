@@ -2,6 +2,7 @@ import { todayPlanV1, type TodayPlanV1 } from '@coach/contract';
 import type { Session } from '@supabase/supabase-js';
 import { useCallback, useEffect, useState } from 'react';
 import { Button, ScrollView, StyleSheet, Text } from 'react-native';
+import { logSet, newLoggedSet } from '../lib/logSet';
 import { supabase } from '../lib/supabase';
 
 const REASON_TEXT = {
@@ -24,9 +25,22 @@ function describePlan(plan: TodayPlanV1): string {
     for (const set of e.prescribed_sets) {
       const load = set.target_kg === null ? 'calibration' : `${set.target_kg} kg`;
       lines.push(`   Set ${set.set_index}: ${set.min_reps}–${set.max_reps} reps, ${load}`);
+      for (const logged of set.logged_sets) {
+        lines.push(`      logged ${logged.reps} × ${logged.kg} kg${logged.rpe === null ? '' : ` @ RPE ${logged.rpe}`}`);
+      }
     }
   }
   return lines.join('\n');
+}
+
+/** The first prescribed set today with nothing logged against it yet. */
+function nextUnloggedSet(plan: TodayPlanV1) {
+  if (plan.session === null) return null;
+  for (const e of plan.session.exercises) {
+    const set = e.prescribed_sets.find((s) => s.logged_sets.length === 0);
+    if (set) return { sessionId: plan.session.id, exerciseId: e.exercise_id, set };
+  }
+  return null;
 }
 
 /**
@@ -50,6 +64,24 @@ export function HomeScreen({ session }: { session: Session }) {
     else setError(`today_plan didn't match the v1 contract: ${parsed.error.message}`);
   }, []);
 
+  // Demo only (the lifting UI is Step 2): logs the next unlogged set at the
+  // bottom of its rep range, at its target load (or 20 kg in a calibration week).
+  const logNextSet = useCallback(async () => {
+    const next = plan && nextUnloggedSet(plan);
+    if (!next) return;
+    const { error: logError } = await logSet(
+      newLoggedSet({
+        session_id: next.sessionId,
+        prescribed_set_id: next.set.id,
+        exercise_id: next.exerciseId,
+        reps: next.set.min_reps,
+        kg: next.set.target_kg ?? 20,
+      }),
+    );
+    if (logError) setError(logError.message);
+    else await load();
+  }, [plan, load]);
+
   useEffect(() => {
     void load();
   }, [load, session.user.id]);
@@ -60,6 +92,7 @@ export function HomeScreen({ session }: { session: Session }) {
       <Text style={styles.label}>Today's plan</Text>
       <Text style={styles.mono}>{error ?? (plan ? describePlan(plan) : 'Loading…')}</Text>
       <Button title="Refresh" onPress={() => void load()} />
+      {plan && nextUnloggedSet(plan) && <Button title="Log a set (demo)" onPress={() => void logNextSet()} />}
       <Button title="Log out" onPress={() => supabase.auth.signOut()} />
     </ScrollView>
   );

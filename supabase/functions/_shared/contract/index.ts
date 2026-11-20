@@ -17,6 +17,7 @@ export {
   sessionStatus,
   todayPlanSessionV1,
   todayPlanV1,
+  type LoggedSetV1,
   type NoSessionReason,
   type TodayPlanSessionV1,
   type TodayPlanV1,

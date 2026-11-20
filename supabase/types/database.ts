@@ -279,6 +279,75 @@ export type Database = {
         }
         Relationships: []
       }
+      logged_sets: {
+        Row: {
+          created_at: string
+          exercise_id: string
+          id: string
+          kg: number
+          performed_at: string
+          prescribed_set_id: string | null
+          reps: number
+          rpe: number | null
+          session_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exercise_id: string
+          id: string
+          kg: number
+          performed_at?: string
+          prescribed_set_id?: string | null
+          reps: number
+          rpe?: number | null
+          session_id: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          exercise_id?: string
+          id?: string
+          kg?: number
+          performed_at?: string
+          prescribed_set_id?: string | null
+          reps?: number
+          rpe?: number | null
+          session_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "logged_sets_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "logged_sets_prescribed_set_id_session_id_exercise_id_user__fkey"
+            columns: [
+              "prescribed_set_id",
+              "session_id",
+              "exercise_id",
+              "user_id",
+            ]
+            isOneToOne: false
+            referencedRelation: "prescribed_sets"
+            referencedColumns: ["id", "session_id", "exercise_id", "user_id"]
+          },
+          {
+            foreignKeyName: "logged_sets_session_id_user_id_fkey"
+            columns: ["session_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
       prescribed_sets: {
         Row: {
           created_at: string

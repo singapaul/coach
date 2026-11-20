@@ -1,12 +1,15 @@
 import { z } from 'zod';
-import { definePublishedObject, isoDate } from './envelope.ts';
+import { definePublishedObject, isoDate, isoDateTimeUtc } from './envelope.ts';
 
-/**
- * A set already logged against a prescribed set. Filled in by the logging
- * ticket (#5); until then today_plan always returns an empty array, so this
- * schema accepts nothing and any non-empty `logged_sets` fails the contract.
- */
-export const loggedSetV1 = z.never();
+/** A set already logged against a prescribed set, oldest first. */
+export const loggedSetV1 = z.object({
+  /** Created by the app when the set was logged. */
+  id: z.uuid(),
+  performed_at: isoDateTimeUtc,
+  reps: z.number().int().nonnegative(),
+  kg: z.number().nonnegative(),
+  rpe: z.number().min(1).max(10).nullable(),
+});
 
 export const prescribedSetV1 = z.object({
   id: z.uuid(),
@@ -63,4 +66,5 @@ export const todayPlanV1 = z.union([
 
 export type TodayPlanV1 = z.infer<typeof todayPlanV1>;
 export type TodayPlanSessionV1 = z.infer<typeof todayPlanSessionV1>;
+export type LoggedSetV1 = z.infer<typeof loggedSetV1>;
 export type NoSessionReason = z.infer<typeof noSessionReason>;
