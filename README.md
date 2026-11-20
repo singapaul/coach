@@ -43,7 +43,17 @@ After changing the schema, run `pnpm db:reset && pnpm db:types` and commit the r
 - `01_free_exercise_db.sql`: the whole of [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (Unlicense) at a pinned commit. It's generated, so don't edit it by hand. To move to a newer commit, change `COMMIT` and `SHA256` in `scripts/generate-exercise-seed.mjs`, then run `node scripts/generate-exercise-seed.mjs`. The seed itself never touches the network.
 - `02_coach_shortlist.sql`: the hand-tagged shortlist of exercises the coach may use (ADR 0004). It's the only place that sets tags on seeded exercises: add, change or remove a line there.
 
+- `03_starting_block.sql`: the local test user, **`lifter@coach.local` / `coach-local-lifter`** (Europe/London), and their starting Push/Pull/Legs block. The block starts on the Monday of the current training week at seed time, and only week 1 exists: its sessions and calibration prescribed sets with no target loads (ADR 0002). On the hosted project the block is created for the real account by a one-off script instead.
+
 Which exercises the coach may use is defined once, by the `coach_eligible_exercises()` database function.
+
+### Published objects
+
+Clients read published objects over RPC (ADR 0001); their Zod schemas are in the contract package.
+
+- `today_plan()`: today's session in the lifter's time zone, with its exercises, prescribed sets and logged sets, or `session: null` with `reason` `no_active_block` or `no_session_today`. `today_plan_at(p_at)` returns the same object as if "now" were `p_at`; the tests use it to pin the clock, and clients call `today_plan()`.
+
+Training weeks run Monday to Sunday in the profile's time zone: `training_week_start(date)` and `lifter_local_date(timestamptz)` are the database helpers for that.
 
 ### Running a second stack beside the first
 
@@ -90,7 +100,7 @@ The app is an Expo **development build**, not Expo Go. Build and install it once
 
    Open Coach on the phone and pick the dev server, or scan the QR code.
 
-Sign up with an email and password (email confirmation is off locally), and the app creates your profile with the phone's time zone. The login is saved on the phone (AsyncStorage) and survives an app restart until you log out.
+Sign up with an email and password (email confirmation is off locally), and the app creates your profile with the phone's time zone. To see a seeded plan, log in as `lifter@coach.local` / `coach-local-lifter` instead. The login is saved on the phone (AsyncStorage) and survives an app restart until you log out.
 
 ## Hosted project
 

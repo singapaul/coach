@@ -9,6 +9,180 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      block_days: {
+        Row: {
+          block_id: string
+          created_at: string
+          day_template_id: string
+          id: string
+          position: number
+          user_id: string
+          weekday: number
+        }
+        Insert: {
+          block_id: string
+          created_at?: string
+          day_template_id: string
+          id?: string
+          position: number
+          user_id?: string
+          weekday: number
+        }
+        Update: {
+          block_id?: string
+          created_at?: string
+          day_template_id?: string
+          id?: string
+          position?: number
+          user_id?: string
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "block_days_block_id_user_id_fkey"
+            columns: ["block_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "blocks"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "block_days_day_template_id_user_id_fkey"
+            columns: ["day_template_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "day_templates"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
+      blocks: {
+        Row: {
+          created_at: string
+          created_by: string
+          goal_id: string | null
+          id: string
+          length_weeks: number
+          rationale: string | null
+          split_name: string
+          start_date: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string
+          goal_id?: string | null
+          id?: string
+          length_weeks?: number
+          rationale?: string | null
+          split_name: string
+          start_date: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          goal_id?: string | null
+          id?: string
+          length_weeks?: number
+          rationale?: string | null
+          split_name?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      day_template_exercises: {
+        Row: {
+          created_at: string
+          day_template_id: string
+          exercise_id: string
+          id: string
+          max_reps: number
+          min_reps: number
+          position: number
+          rest_s: number
+          sets: number
+          updated_at: string
+          user_id: string
+          user_pinned: boolean
+        }
+        Insert: {
+          created_at?: string
+          day_template_id: string
+          exercise_id: string
+          id?: string
+          max_reps: number
+          min_reps: number
+          position: number
+          rest_s: number
+          sets: number
+          updated_at?: string
+          user_id?: string
+          user_pinned?: boolean
+        }
+        Update: {
+          created_at?: string
+          day_template_id?: string
+          exercise_id?: string
+          id?: string
+          max_reps?: number
+          min_reps?: number
+          position?: number
+          rest_s?: number
+          sets?: number
+          updated_at?: string
+          user_id?: string
+          user_pinned?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "day_template_exercises_day_template_id_user_id_fkey"
+            columns: ["day_template_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "day_templates"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "day_template_exercises_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      day_templates: {
+        Row: {
+          created_at: string
+          focus: string | null
+          id: string
+          name: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          focus?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          focus?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       exercise_similar: {
         Row: {
           carryover_factor: number
@@ -105,6 +279,63 @@ export type Database = {
         }
         Relationships: []
       }
+      prescribed_sets: {
+        Row: {
+          created_at: string
+          exercise_id: string
+          id: string
+          max_reps: number
+          min_reps: number
+          position: number
+          session_id: string
+          set_index: number
+          target_kg: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          exercise_id: string
+          id?: string
+          max_reps: number
+          min_reps: number
+          position: number
+          session_id: string
+          set_index: number
+          target_kg?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          exercise_id?: string
+          id?: string
+          max_reps?: number
+          min_reps?: number
+          position?: number
+          session_id?: string
+          set_index?: number
+          target_kg?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescribed_sets_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescribed_sets_session_id_user_id_fkey"
+            columns: ["session_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "sessions"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           birth_year: number | null
@@ -140,6 +371,60 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      sessions: {
+        Row: {
+          block_id: string
+          created_at: string
+          day_template_id: string
+          id: string
+          performed_date: string | null
+          scheduled_date: string
+          status: string
+          training_week_start: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          block_id: string
+          created_at?: string
+          day_template_id: string
+          id?: string
+          performed_date?: string | null
+          scheduled_date: string
+          status?: string
+          training_week_start: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          block_id?: string
+          created_at?: string
+          day_template_id?: string
+          id?: string
+          performed_date?: string | null
+          scheduled_date?: string
+          status?: string
+          training_week_start?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sessions_block_id_user_id_fkey"
+            columns: ["block_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "blocks"
+            referencedColumns: ["id", "user_id"]
+          },
+          {
+            foreignKeyName: "sessions_day_template_id_user_id_fkey"
+            columns: ["day_template_id", "user_id"]
+            isOneToOne: false
+            referencedRelation: "day_templates"
+            referencedColumns: ["id", "user_id"]
+          },
+        ]
       }
       user_exercise_prefs: {
         Row: {
@@ -215,6 +500,17 @@ export type Database = {
         }
       }
       is_iana_timezone: { Args: { tz: string }; Returns: boolean }
+      lifter_local_date: {
+        Args: { p_at: string; p_user_id?: string }
+        Returns: string
+      }
+      today_plan: { Args: never; Returns: Json }
+      today_plan_at: { Args: { p_at: string }; Returns: Json }
+      today_plan_logged_sets: {
+        Args: { p_prescribed_set_id: string }
+        Returns: Json
+      }
+      training_week_start: { Args: { d: string }; Returns: string }
     }
     Enums: {
       [_ in never]: never
