@@ -9,6 +9,102 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      exercise_similar: {
+        Row: {
+          carryover_factor: number
+          created_at: string
+          exercise_id: string
+          similar_exercise_id: string
+          user_id: string
+        }
+        Insert: {
+          carryover_factor: number
+          created_at?: string
+          exercise_id: string
+          similar_exercise_id: string
+          user_id?: string
+        }
+        Update: {
+          carryover_factor?: number
+          created_at?: string
+          exercise_id?: string
+          similar_exercise_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercise_similar_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercise_similar_similar_exercise_id_fkey"
+            columns: ["similar_exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exercises: {
+        Row: {
+          body_region: string | null
+          category: string | null
+          created_at: string
+          equipment: string | null
+          force: string | null
+          id: string
+          instructions: string[]
+          level: string | null
+          mechanic: string | null
+          movement_pattern: string | null
+          name: string
+          primary_muscles: string[]
+          secondary_muscles: string[]
+          source: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          body_region?: string | null
+          category?: string | null
+          created_at?: string
+          equipment?: string | null
+          force?: string | null
+          id: string
+          instructions?: string[]
+          level?: string | null
+          mechanic?: string | null
+          movement_pattern?: string | null
+          name: string
+          primary_muscles?: string[]
+          secondary_muscles?: string[]
+          source?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          body_region?: string | null
+          category?: string | null
+          created_at?: string
+          equipment?: string | null
+          force?: string | null
+          id?: string
+          instructions?: string[]
+          level?: string | null
+          mechanic?: string | null
+          movement_pattern?: string | null
+          name?: string
+          primary_muscles?: string[]
+          secondary_muscles?: string[]
+          source?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           birth_year: number | null
@@ -45,11 +141,79 @@ export type Database = {
         }
         Relationships: []
       }
+      user_exercise_prefs: {
+        Row: {
+          available: boolean
+          avoid: boolean
+          created_at: string
+          exercise_id: string
+          favourite: boolean
+          notes: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          available?: boolean
+          avoid?: boolean
+          created_at?: string
+          exercise_id: string
+          favourite?: boolean
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          available?: boolean
+          avoid?: boolean
+          created_at?: string
+          exercise_id?: string
+          favourite?: boolean
+          notes?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_exercise_prefs_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      coach_eligible_exercises: {
+        Args: { p_user_id?: string }
+        Returns: {
+          body_region: string | null
+          category: string | null
+          created_at: string
+          equipment: string | null
+          force: string | null
+          id: string
+          instructions: string[]
+          level: string | null
+          mechanic: string | null
+          movement_pattern: string | null
+          name: string
+          primary_muscles: string[]
+          secondary_muscles: string[]
+          source: string
+          updated_at: string
+          user_id: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "exercises"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       is_iana_timezone: { Args: { tz: string }; Returns: boolean }
     }
     Enums: {

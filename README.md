@@ -28,13 +28,22 @@ pnpm typecheck     # every workspace package
 Other commands:
 
 ```sh
-pnpm db:reset      # drop the local database and re-apply every migration
+pnpm db:reset      # drop the local database, re-apply every migration, then run supabase/seeds/*.sql
 pnpm db:types      # regenerate supabase/types/database.ts from the local schema
 pnpm db:stop       # stop the stack
 supabase migration new <name>   # new file in supabase/migrations/
 ```
 
 After changing the schema, run `pnpm db:reset && pnpm db:types` and commit the regenerated `supabase/types/database.ts`.
+
+### Seed data
+
+`supabase/seeds/*.sql` run in file-name order after the migrations, on every `db reset`. Each file is safe to run again.
+
+- `01_free_exercise_db.sql`: the whole of [free-exercise-db](https://github.com/yuhonas/free-exercise-db) (Unlicense) at a pinned commit. It's generated, so don't edit it by hand. To move to a newer commit, change `COMMIT` and `SHA256` in `scripts/generate-exercise-seed.mjs`, then run `node scripts/generate-exercise-seed.mjs`. The seed itself never touches the network.
+- `02_coach_shortlist.sql`: the hand-tagged shortlist of exercises the coach may use (ADR 0004). It's the only place that sets tags on seeded exercises: add, change or remove a line there.
+
+Which exercises the coach may use is defined once, by the `coach_eligible_exercises()` database function.
 
 ### Running a second stack beside the first
 
